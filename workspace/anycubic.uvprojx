@@ -53,8 +53,8 @@
           <OutputName>firmware</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>1</CreateHexFile>
-          <DebugInformation>1</DebugInformation>
+          <CreateHexFile>0</CreateHexFile>
+          <DebugInformation>0</DebugInformation>
           <BrowseInformation>0</BrowseInformation>
           <ListingPath>.\list\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
@@ -944,16 +944,6 @@
         <Group>
           <GroupName>src_feature</GroupName>
           <Files>
-            <File>
-              <FileName>abl.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\source\Marlin\src\feature\bedlevel\abl\abl.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>abl.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\source\Marlin\src\feature\bedlevel\abl\abl.h</FilePath>
-            </File>
             <File>
               <FileName>mesh_bed_leveling.cpp</FileName>
               <FileType>8</FileType>
