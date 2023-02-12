@@ -88,6 +88,7 @@ public:
    * Aborts the current PROGMEM queue so only use for one or two commands.
    */
   static inline void inject_P(PGM_P const pgcode) { injected_commands_P = pgcode; }
+  static inline void inject(FSTR_P const fgcode) { inject_P(FTOP(fgcode)); }
 
   /**
    * Enqueue command(s) to run from SRAM. Drained by process_injected_command().

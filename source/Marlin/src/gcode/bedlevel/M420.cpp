@@ -72,8 +72,8 @@ void GcodeSuite::M420() {
                                   (y_max - y_min) / (GRID_MAX_POINTS_Y - 1));
       #endif
       GRID_LOOP(x, y) {
-        Z_VALUES(x, y) = 0.001 * random(-200, 200);
-        TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(x, y, Z_VALUES(x, y)));
+        bedlevel.z_values[x][y] = 0.001 * random(-200, 200);
+        TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(x, y, bedlevel.z_values[x][y]));
       }
       SERIAL_ECHOPGM("Simulated " STRINGIFY(GRID_MAX_POINTS_X) "x" STRINGIFY(GRID_MAX_POINTS_Y) " mesh ");
       SERIAL_ECHOPAIR(" (", x_min);
@@ -161,7 +161,7 @@ void GcodeSuite::M420() {
             // Find the low and high mesh values
             float lo_val = 100, hi_val = -100;
             GRID_LOOP(x, y) {
-              const float z = Z_VALUES(x, y);
+              const float z = bedlevel.z_values[x][y];
               NOMORE(lo_val, z);
               NOLESS(hi_val, z);
             }
@@ -175,8 +175,8 @@ void GcodeSuite::M420() {
             set_bed_leveling_enabled(false);
             // Subtract the mean from all values
             GRID_LOOP(x, y) {
-              Z_VALUES(x, y) -= zmean;
-              TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(x, y, Z_VALUES(x, y)));
+              bedlevel.z_values[x][y] -= zmean;
+              TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(x, y, bedlevel.z_values[x][y]));
             }
             TERN_(ABL_BILINEAR_SUBDIVISION, bed_level_virt_interpolate());
           }
@@ -203,7 +203,7 @@ void GcodeSuite::M420() {
           TERN_(ABL_BILINEAR_SUBDIVISION, print_bilinear_leveling_grid_virt());
         #elif ENABLED(MESH_BED_LEVELING)
           SERIAL_ECHOLNPGM("Mesh Bed Level data:");
-          mbl.report_mesh();
+          bedlevel.report_mesh();
         #endif
       }
     #endif

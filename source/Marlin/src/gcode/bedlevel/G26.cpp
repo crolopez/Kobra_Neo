@@ -720,7 +720,7 @@ void GcodeSuite::G26() {
     location = find_closest_circle_to_print(g26_continue_with_closest ? xy_pos_t(current_position) : g26_xy_pos);
 
     if (location.valid()) {
-      const xy_pos_t circle = _GET_MESH_POS(location.pos);
+      const xy_pos_t circle = { bedlevel.get_mesh_x(location.pos.a), bedlevel.get_mesh_y(location.pos.b) };
 
       // If this mesh location is outside the printable radius, skip it.
       if (!position_is_reachable(circle)) continue;

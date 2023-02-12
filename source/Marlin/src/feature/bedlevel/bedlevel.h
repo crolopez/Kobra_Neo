@@ -70,7 +70,6 @@ class TemporaryBedLevelingState {
   #endif
 
   #define Z_VALUES(X,Y) Z_VALUES_ARR[X][Y]
-  #define _GET_MESH_POS(M) { _GET_MESH_X(M.a), _GET_MESH_Y(M.b) }
 
   #if EITHER(AUTO_BED_LEVELING_BILINEAR, MESH_BED_LEVELING)
 
@@ -81,7 +80,7 @@ class TemporaryBedLevelingState {
     /**
      * Print calibration results for plotting or manual frame adjustment.
      */
-    void print_2d_array(const uint8_t sx, const uint8_t sy, const uint8_t precision, element_2d_fn fn);
+    void print_2d_array(const uint8_t sx, const uint8_t sy, const uint8_t precision, const float *values);
 
   #endif
 

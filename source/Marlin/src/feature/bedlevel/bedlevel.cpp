@@ -47,7 +47,7 @@
 #endif
 
 bool leveling_is_valid() {
-  return TERN1(MESH_BED_LEVELING,          mbl.has_mesh())
+  return TERN1(MESH_BED_LEVELING,          bedlevel.has_mesh())
       && TERN1(AUTO_BED_LEVELING_BILINEAR, !!bilinear_grid_spacing.x)
       && TERN1(AUTO_BED_LEVELING_UBL,      ubl.mesh_is_valid());
 }
@@ -127,7 +127,7 @@ void reset_bed_level() {
   #else
     set_bed_leveling_enabled(false);
     #if ENABLED(MESH_BED_LEVELING)
-      mbl.reset();
+      bedlevel.reset();
     #elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
       bilinear_start.reset();
       bilinear_grid_spacing.reset();
@@ -156,11 +156,11 @@ void reset_bed_level() {
   /**
    * Print calibration results for plotting or manual frame adjustment.
    */
-  void print_2d_array(const uint8_t sx, const uint8_t sy, const uint8_t precision, element_2d_fn fn) {
+  void print_2d_array(const uint8_t sx, const uint8_t sy, const uint8_t precision, const float *values) {
     #ifndef SCAD_MESH_OUTPUT
       LOOP_L_N(x, sx) {
         serial_spaces(precision + (x < 10 ? 3 : 2));
-        SERIAL_ECHO(int(x));
+        SERIAL_ECHO(x);
       }
       SERIAL_EOL();
     #endif
@@ -172,11 +172,11 @@ void reset_bed_level() {
         SERIAL_ECHOPGM(" [");             // open sub-array
       #else
         if (y < 10) SERIAL_CHAR(' ');
-        SERIAL_ECHO(int(y));
+        SERIAL_ECHO(y);
       #endif
       LOOP_L_N(x, sx) {
         SERIAL_CHAR(' ');
-        const float offset = fn(x, y);
+        const float offset = values[x * sy + y];
         if (!isnan(offset)) {
           if (offset >= 0) SERIAL_CHAR('+');
           SERIAL_ECHO_F(offset, int(precision));
@@ -196,7 +196,7 @@ void reset_bed_level() {
         #endif
       }
       #ifdef SCAD_MESH_OUTPUT
-        SERIAL_CHAR(' ', ']');            // close sub-array
+        SERIAL_ECHOPGM(" ]");            // close sub-array
         if (y < sy - 1) SERIAL_CHAR(',');
       #endif
       SERIAL_EOL();
@@ -215,15 +215,15 @@ void reset_bed_level() {
 
     #ifdef MANUAL_PROBE_START_Z
       constexpr float startz = _MAX(0, MANUAL_PROBE_START_Z);
-      #if MANUAL_PROBE_HEIGHT > 0
-        do_blocking_move_to_xy_z(pos, MANUAL_PROBE_HEIGHT);
+      #if Z_CLEARANCE_BETWEEN_MANUAL_PROBES > 0
+        do_blocking_move_to_xy_z(pos, Z_CLEARANCE_BETWEEN_MANUAL_PROBES);
         do_blocking_move_to_z(startz);
       #else
         do_blocking_move_to_xy_z(pos, startz);
       #endif
-    #elif MANUAL_PROBE_HEIGHT > 0
+    #elif Z_CLEARANCE_BETWEEN_MANUAL_PROBES > 0
       const float prev_z = current_position.z;
-      do_blocking_move_to_xy_z(pos, MANUAL_PROBE_HEIGHT);
+      do_blocking_move_to_xy_z(pos, Z_CLEARANCE_BETWEEN_MANUAL_PROBES);
       do_blocking_move_to_z(prev_z);
     #else
       do_blocking_move_to_xy(pos);

@@ -580,10 +580,10 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
       millis_t MarlinUI::expire_status_ms; // = 0
     #endif
   #endif
-//*******************************ÒòÎªÒªÔÚÕâÀï¼ÓÑ¡ÔñÏî£¬ËùÒÔÐèÒªÔö¼ÓÒ»ÏÂ±äÁ¿£¬±íÊ¾±»Ñ¡ÖÐµÄÄÇ¸öÏî£¬È»ºóÄÇ¸öÏî¾ÍË³±ãÑÕÉ«±ä³ÉÉÁË¸ÐÍ*************
-//************************0±íÊ¾Ã»ÓÐÑ¡ÖÐ£¬µã»÷¾Í»á½øÈëÖ÷½çÃæ*********************
-//************************1±íÊ¾Ñ¡ÖÐÅç×ì£¬µã»÷¾ÍÐÞ¸ÄÅç×ìÎÂ¶È*********************
-//************************2±íÊ¾ÈÈ´²£¬3·çÉÈ£¬4´òÓ¡ËÙ¶È£¬5ËÙ±È£¬6ÔÝÎÞ***************
+//*******************************ï¿½ï¿½ÎªÒªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ò»ï¿½Â±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Ñ¡ï¿½Ðµï¿½ï¿½Ç¸ï¿½ï¿½î£¬È»ï¿½ï¿½ï¿½Ç¸ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½Ë¸ï¿½ï¿½*************
+//************************0ï¿½ï¿½Ê¾Ã»ï¿½ï¿½Ñ¡ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*********************
+//************************1ï¿½ï¿½Ê¾Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ì£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¶ï¿½*********************
+//************************2ï¿½ï¿½Ê¾ï¿½È´ï¿½ï¿½ï¿½3ï¿½ï¿½ï¿½È£ï¿½4ï¿½ï¿½Ó¡ï¿½Ù¶È£ï¿½5ï¿½Ù±È£ï¿½6ï¿½ï¿½ï¿½ï¿½***************
   void MarlinUI::status_screen() {
   
 
@@ -645,7 +645,7 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
       if (use_click()) {
 
        switch(seclect){
-//       case 0:             //È¥Ö÷½çÃæ
+//       case 0:             //È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //            #if BOTH(FILAMENT_LCD_DISPLAY, SDSUPPORT)
 //              next_filament_display = millis() + 5000UL;  // Show status message for 5s
 //            #endif
@@ -681,7 +681,7 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
          break;
          case 4:
 		  Beforeprobe_offset = probe.offset.z;
-          goto_screen(lcd_babystep_zoffset);    //z ÖáÆ«ÒÆ
+          //goto_screen(lcd_babystep_zoffset); 
           ui.refresh();                         //
           seclect=4;
         
@@ -703,7 +703,7 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
           seclect=6;
    
         break;
-        case 7:               //ÔÝÍ£»òÕß»Ö¸´
+        case 7:               //ï¿½ï¿½Í£ï¿½ï¿½ï¿½ß»Ö¸ï¿½
         if(TERN0(SDSUPPORT, IS_SD_PRINTING() || IS_SD_PAUSED()))
 		{
               if(busy)
@@ -720,7 +720,7 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
         }
         break;
         
-        case 8:               //ÖÐÖ¹´òÓ¡
+        case 8:               //ï¿½ï¿½Ö¹ï¿½ï¿½Ó¡
         if(TERN0(SDSUPPORT, IS_SD_PRINTING() || IS_SD_PAUSED()))
 		{
           goto_screen(LCD_abort_pring);
@@ -1715,6 +1715,37 @@ extern  uint8_t SOS_flag;
     finish_status(persist);
   }
 
+  void MarlinUI::set_status(FSTR_P const fstr, int8_t level) {
+    // Alerts block lower priority messages
+    if (level < 0) level = alert_level = 0;
+    if (level < alert_level) return;
+    alert_level = level;
+
+    PGM_P const pstr = FTOP(fstr);
+
+    // Since the message is encoded in UTF8 it must
+    // only be cut on a character boundary.
+
+    // Get a pointer to the null terminator
+    PGM_P pend = pstr + strlen_P(pstr);
+
+    // If length of supplied UTF8 string is greater than
+    // the buffer size, start cutting whole UTF8 chars
+    while ((pend - pstr) > MAX_MESSAGE_LENGTH) {
+      --pend;
+      while (!START_OF_UTF8_CHAR(pgm_read_byte(pend))) --pend;
+    };
+
+    // At this point, we have the proper cut point. Use it
+    uint8_t maxLen = pend - pstr;
+    strncpy_P(status_message, pstr, maxLen);
+    status_message[maxLen] = '\0';
+
+    TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(fstr));
+
+    finish_status(level > 0);
+  }
+
   /**
    * Reset the status message
    */
@@ -1793,6 +1824,22 @@ extern  uint8_t SOS_flag;
   }
 
   #include <stdarg.h>
+
+  void MarlinUI::status_printf(int8_t level, FSTR_P const fmt, ...) {
+    // Alerts block lower priority messages
+    if (level < 0) level = alert_level = 0;
+    if (level < alert_level) return;
+    alert_level = level;
+
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf_P(status_message, MAX_MESSAGE_LENGTH, FTOP(fmt), args);
+    va_end(args);
+
+    TERN_(HOST_STATUS_NOTIFICATIONS, hostui.notify(status_message));
+
+    finish_status(level > 0);
+  }
 
   void MarlinUI::status_printf_P(const uint8_t level, PGM_P const fmt, ...) {
     if (level < alert_level) return;
@@ -1983,6 +2030,9 @@ extern  uint8_t SOS_flag;
   }
   void MarlinUI::status_printf_P(const uint8_t, PGM_P const message, ...) {
     TERN(HOST_PROMPT_SUPPORT, host_action_notify_P(message), UNUSED(message));
+  }
+  void MarlinUI::status_printf(int8_t, FSTR_P const fstr, ...) {
+    TERN(HOST_PROMPT_SUPPORT, hostui.notify(fstr), UNUSED(fstr));
   }
 
 #endif // !HAS_DISPLAY && !HAS_STATUS_MESSAGE

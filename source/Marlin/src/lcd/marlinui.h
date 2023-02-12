@@ -349,6 +349,7 @@ public:
     static bool has_status();
     static void reset_status(const bool no_welcome=false);
     static void set_status(const char * const message, const bool persist=false);
+    static void set_status(FSTR_P const fstr, const int8_t level=0);
     static void set_status_P(PGM_P const message, const int8_t level=0);
     static void status_printf_P(const uint8_t level, PGM_P const fmt, ...);
     static void set_alert_status_P(PGM_P const message);
@@ -368,6 +369,8 @@ public:
   #else
     static inline void kill_screen(PGM_P const, PGM_P const) {}
   #endif
+
+  static void status_printf(int8_t level, FSTR_P const fmt, ...);
 
   #if HAS_DISPLAY
 
@@ -763,3 +766,5 @@ extern MarlinUI ui;
 
 #define LCD_MESSAGEPGM(x)        LCD_MESSAGEPGM_P(GET_TEXT(x))
 #define LCD_ALERTMESSAGEPGM(x)   LCD_ALERTMESSAGEPGM_P(GET_TEXT(x))
+
+#define LCD_MESSAGE(M)         ui.set_status(GET_TEXT_F(M))
