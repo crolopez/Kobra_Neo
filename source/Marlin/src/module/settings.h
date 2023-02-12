@@ -105,6 +105,41 @@ class MarlinSettings {
 
       static bool _load();
       static bool size_error(const uint16_t size);
+
+      static int eeprom_index;
+      static uint16_t working_crc;
+
+      static bool EEPROM_START(int eeprom_offset) {
+        if (!persistentStore.access_start()) { SERIAL_ECHO_MSG("No EEPROM."); return false; }
+        eeprom_index = eeprom_offset;
+        working_crc = 0;
+        return true;
+      }
+
+      static void EEPROM_FINISH(void) { persistentStore.access_finish(); }
+
+      template<typename T>
+      static void EEPROM_SKIP(const T &VAR) { SERIAL_ECHO_MSG("eeprom_index antes skip ", eeprom_index); eeprom_index += sizeof(VAR); SERIAL_ECHO_MSG("eeprom_index despues skip ", eeprom_index); }
+
+      template<typename T>
+      static void EEPROM_WRITE(const T &VAR) {
+        persistentStore.write_data(eeprom_index, (const uint8_t *) &VAR, sizeof(VAR), &working_crc);
+      }
+
+      template<typename T>
+      static void EEPROM_READ(T &VAR) {
+        persistentStore.read_data(eeprom_index, (uint8_t *) &VAR, sizeof(VAR), &working_crc, !validating);
+      }
+
+      static void EEPROM_READ(uint8_t *VAR, size_t sizeof_VAR) {
+        persistentStore.read_data(eeprom_index, VAR, sizeof_VAR, &working_crc, !validating);
+      }
+
+      template<typename T>
+      static void EEPROM_READ_ALWAYS(T &VAR) {
+        persistentStore.read_data(eeprom_index, (uint8_t *) &VAR, sizeof(VAR), &working_crc);
+      }
+
     #endif
 };
 

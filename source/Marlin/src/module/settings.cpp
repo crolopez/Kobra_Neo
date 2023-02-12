@@ -394,7 +394,7 @@ typedef struct SettingsDataStruct {
   //
   // ADVANCED_PAUSE_FEATURE
   //
-  #if EXTRUDERS
+  #if HAS_EXTRUDERS
     fil_change_settings_t fc_settings[EXTRUDERS];       // M603 T U L
   #endif
 
@@ -567,13 +567,6 @@ void MarlinSettings::postprocess() {
 
 #if ENABLED(EEPROM_SETTINGS)
 
-  #define EEPROM_START()          if (!persistentStore.access_start()) { SERIAL_ECHO_MSG("No EEPROM."); return false; } \
-                                  int eeprom_index = EEPROM_OFFSET
-  #define EEPROM_FINISH()         persistentStore.access_finish()
-  #define EEPROM_SKIP(VAR)        (eeprom_index += sizeof(VAR))
-  #define EEPROM_WRITE(VAR)       do{ persistentStore.write_data(eeprom_index, (uint8_t*)&VAR, sizeof(VAR), &working_crc);              }while(0)
-  #define EEPROM_READ(VAR)        do{ persistentStore.read_data(eeprom_index, (uint8_t*)&VAR, sizeof(VAR), &working_crc, !validating);  }while(0)
-  #define EEPROM_READ_ALWAYS(VAR) do{ persistentStore.read_data(eeprom_index, (uint8_t*)&VAR, sizeof(VAR), &working_crc);               }while(0)
   #define EEPROM_ASSERT(TST,ERR)  do{ if (!(TST)) { SERIAL_ERROR_MSG(ERR); eeprom_error = true; } }while(0)
 
   #if ENABLED(DEBUG_EEPROM_READWRITE)
@@ -589,10 +582,13 @@ void MarlinSettings::postprocess() {
   const char version[4] = EEPROM_VERSION;
 
   bool MarlinSettings::eeprom_error, MarlinSettings::validating;
+  int MarlinSettings::eeprom_index;
+  uint16_t MarlinSettings::working_crc;
 
   bool MarlinSettings::size_error(const uint16_t size) {
     if (size != datasize()) {
-      DEBUG_ERROR_MSG("EEPROM datasize error.");
+      DEBUG_ERROR_MSG("EEPROM datasize error. (Actual:", size, " Expected:", datasize(), ")"
+      );
       return true;
     }
     return false;
@@ -605,9 +601,7 @@ void MarlinSettings::postprocess() {
     float dummyf = 0;
     char ver[4] = "ERR";
 
-    uint16_t working_crc = 0;
-
-    EEPROM_START();
+  if (!EEPROM_START(EEPROM_OFFSET)) return false;            
 
     eeprom_error = false;
 
@@ -621,6 +615,7 @@ void MarlinSettings::postprocess() {
     _FIELD_TEST(esteppers);
 
     const uint8_t esteppers = COUNT(planner.settings.axis_steps_per_mm) - XYZ;
+    _FIELD_TEST(esteppers);
     EEPROM_WRITE(esteppers);
 
     //
@@ -761,10 +756,10 @@ void MarlinSettings::postprocess() {
           "Bilinear Z array is the wrong size."
         );
       #else
-        xy_int8_t bilinear_start;
+        xy_pos_t bilinear_start;
         bilinear_start.x = 0;
         bilinear_start.y = 0;
-        xy_int8_t bilinear_grid_spacing;
+        xy_pos_t bilinear_grid_spacing;
         bilinear_grid_spacing.x = 0;
         bilinear_grid_spacing.y = 0;
         //const xy_pos_t bilinear_start{0}, bilinear_grid_spacing{0};
@@ -1408,7 +1403,6 @@ void MarlinSettings::postprocess() {
       EEPROM_WRITE(final_crc);
 
       // Report storage size
-      DEBUG_ECHO_START();
       DEBUG_ECHOLNPAIR("Settings Stored (", eeprom_size, " bytes; crc ", (uint32_t)final_crc, ")");
 
       eeprom_error |= size_error(eeprom_size);
@@ -1434,15 +1428,10 @@ void MarlinSettings::postprocess() {
    * M501 - Retrieve Configuration
    */
   bool MarlinSettings::_load() {
-    uint16_t working_crc = 0;
-
-    EEPROM_START();
+    if (!EEPROM_START(EEPROM_OFFSET)) return false;
 
     char stored_ver[4];
     EEPROM_READ_ALWAYS(stored_ver);
-
-    uint16_t stored_crc;
-    EEPROM_READ_ALWAYS(stored_crc);
 
     // Version has to match or defaults are used
     if (strncmp(version, stored_ver, 3) != 0) {
@@ -1456,6 +1445,9 @@ void MarlinSettings::postprocess() {
       eeprom_error = true;
     }
     else {
+      uint16_t stored_crc;
+      EEPROM_READ_ALWAYS(stored_crc);
+
       float dummyf = 0;
       working_crc = 0;  // Init to 0. Accumulated by EEPROM_READ
 
@@ -1474,10 +1466,10 @@ void MarlinSettings::postprocess() {
         uint32_t tmp1[XYZ + esteppers];
         float tmp2[XYZ + esteppers];
         feedRate_t tmp3[XYZ + esteppers];
-        EEPROM_READ(tmp1);                         // max_acceleration_mm_per_s2
+        EEPROM_READ((uint8_t *)tmp1, sizeof(tmp1)); // max_acceleration_mm_per_s2
         EEPROM_READ(planner.settings.min_segment_time_us);
-        EEPROM_READ(tmp2);                         // axis_steps_per_mm
-        EEPROM_READ(tmp3);                         // max_feedrate_mm_s
+        EEPROM_READ((uint8_t *)tmp2, sizeof(tmp2)); // axis_steps_per_mm
+        EEPROM_READ((uint8_t *)tmp3, sizeof(tmp3)); // max_feedrate_mm_s
 
         if (!validating) LOOP_XYZE_N(i) {
           const bool in = (i < esteppers + XYZ);
@@ -1625,7 +1617,7 @@ void MarlinSettings::postprocess() {
           {
             // Skip past disabled (or stale) Bilinear Grid data
             xy_pos_t bgs, bs;
-            EEPROM_READ(bgs);
+            EEPROM_READ(bgs); // ~~
             EEPROM_READ(bs);
             for (uint16_t q = grid_max_x * grid_max_y; q--;) EEPROM_READ(dummyf);
           }
